@@ -1,0 +1,310 @@
+---
+title: "Cyclist case study"
+author: "Deepanshu"
+date: "08/01/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+# Load libraries
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+library(readr)
+library(janitor)
+library(data.table)
+library(tidyr)
+```
+# Load datasets
+```{r}
+tripdata_202004 <- read.csv("/Users/deep/Desktop/datasets/202004-divvy-tripdata.csv")
+tripdata_202005 <- read.csv("/Users/deep/Desktop/datasets/202005-divvy-tripdata.csv")
+tripdata_202006 <- read.csv("/Users/deep/Desktop/datasets/202006-divvy-tripdata.csv")
+tripdata_202007 <- read.csv("/Users/deep/Desktop/datasets/202007-divvy-tripdata.csv")
+tripdata_202008 <- read.csv("/Users/deep/Desktop/datasets/202008-divvy-tripdata.csv")
+tripdata_202009 <- read.csv("/Users/deep/Desktop/datasets/202009-divvy-tripdata.csv")
+tripdata_202010 <- read.csv("/Users/deep/Desktop/datasets/202010-divvy-tripdata.csv")
+tripdata_202011 <- read.csv("/Users/deep/Desktop/datasets/202011-divvy-tripdata.csv")
+tripdata_202012 <- read.csv("/Users/deep/Desktop/datasets/202012-divvy-tripdata.csv")
+tripdata_202101 <- read.csv("/Users/deep/Desktop/datasets/202101-divvy-tripdata.csv")
+tripdata_202102 <- read.csv("/Users/deep/Desktop/datasets/202102-divvy-tripdata.csv")
+tripdata_202103 <- read.csv("/Users/deep/Desktop/datasets/202103-divvy-tripdata.csv")
+tripdata_202104 <- read.csv("/Users/deep/Desktop/datasets/202104-divvy-tripdata.csv")
+tripdata_202105 <- read.csv("/Users/deep/Desktop/datasets/202105-divvy-tripdata.csv")
+tripdata_202106 <- read.csv("/Users/deep/Desktop/datasets/202106-divvy-tripdata.csv")
+tripdata_202107 <- read.csv("/Users/deep/Desktop/datasets/202107-divvy-tripdata.csv")
+```
+# Check column names of each dataset for consistency
+```{r}
+colnames(tripdata_202004)
+colnames(tripdata_202005)
+colnames(tripdata_202006)
+colnames(tripdata_202107)
+colnames(tripdata_202008)
+colnames(tripdata_202009)
+colnames(tripdata_202010)
+colnames(tripdata_202011)
+colnames(tripdata_202012)
+colnames(tripdata_202101)
+colnames(tripdata_202102)
+colnames(tripdata_202103)
+colnames(tripdata_202104)
+colnames(tripdata_202105)
+colnames(tripdata_202106)
+colnames(tripdata_202107)
+```
+#Check data structures and data types for all data frames
+```{r}
+str(tripdata_202004)
+str(tripdata_202005)
+str(tripdata_202006)
+str(tripdata_202107)
+str(tripdata_202008)
+str(tripdata_202009)
+str(tripdata_202010)
+str(tripdata_202011)
+str(tripdata_202012)
+str(tripdata_202101)
+str(tripdata_202102)
+str(tripdata_202103)
+str(tripdata_202104)
+str(tripdata_202105)
+str(tripdata_202106)
+str(tripdata_202107)
+```
+#Data transformation and cleaning
+start_station_id & end_station_id are not consistent in all datasets. The ones in tripdata_202004, tripdata_202005, tripdata_202006, tripdata_202008, tripdata_202009, tripdata_202010, tripdata_202011 are int vs. the others are char. Convert the inconsistent ones from int to char datatype.
+```{r}
+tripdata_202004 <- tripdata_202004 %>% mutate(start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+tripdata_202005 <- tripdata_202005 %>% mutate(start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+tripdata_202006 <- tripdata_202006 %>% mutate(start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+tripdata_202008 <- tripdata_202008 %>% mutate(start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+tripdata_202009 <- tripdata_202009 %>% mutate(start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+tripdata_202010 <- tripdata_202010 %>% mutate(start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+tripdata_202011 <- tripdata_202011 %>% mutate(start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+```
+#3. Process
+
+Combine all the datasets into one single dataframe
+
+```{r}
+all_trips <- bind_rows(tripdata_202004,tripdata_202005,tripdata_202006,tripdata_202107,tripdata_202008,tripdata_202009,tripdata_202010,tripdata_202011,tripdata_202012,
+                tripdata_202101,tripdata_202102,tripdata_202103,tripdata_202104,tripdata_202105,tripdata_202106,tripdata_202107)
+str(all_trips)
+```
+#Clean-up further!
+Hold on! started_at & ended_at should be in datetime datatype instead of char. Convert all from char to datetime.
+```{r}
+all_trips[['started_at']] <- ymd_hms(all_trips[['started_at']])
+all_trips[['ended_at']] <- ymd_hms(all_trips[['ended_at']])
+
+str(all_trips)
+```
+#Remove columns not required or beyond the scope of project
+```{r}
+all_trips <- all_trips %>%
+    select(-c(start_lat:end_lng))
+glimpse(all_trips)
+```
+#Rename columns for better readability
+```{r}
+all_trips <- all_trips %>%
+    rename(ride_type = rideable_type, 
+           start_time = started_at,
+           end_time = ended_at,
+           customer_type = member_casual)
+glimpse(all_trips)
+```
+#Add new columns that can be used for aggregate functions
+```{r}
+all_trips$day_of_the_week <- format(as.Date(all_trips$start_time),'%a')
+all_trips$month <- format(as.Date(all_trips$start_time),'%b_%y')
+all_trips$time <- format(all_trips$start_time, format = "%H:%M")
+all_trips$time <- as.POSIXct(all_trips$time, format = "%H:%M")
+all_trips$trip_duration <- (as.double(difftime(all_trips$end_time, all_trips$start_time)))/60
+glimpse(all_trips)
+```
+Let's check to see if the trip_duration column has any negative values, as this may cause problem while creating visualizations. Also, we do not want to include the trips that were part of quality tests by the company. These trips are usually identified by string 'test' in the start_station_name column.
+```{r}
+nrow(subset(all_trips,trip_duration < 0))
+nrow(subset(all_trips, start_station_name %like% "TEST"))
+nrow(subset(all_trips, start_station_name %like% "test"))
+nrow(subset(all_trips, start_station_name %like% "Test"))
+```
+As there are 8845 rows with trip_dration less than 0 mins and 3220 trips that were test rides, we will remove these observations from our dataframe as they contribute to only about 0.3% of the total rows. We will create a new dataframe deviod of these obseravtions without making any changes to the existing dataframe.
+```{r}
+all_trips_v2 <- all_trips[!(all_trips$trip_duration < 0),]
+all_trips_v2<- all_trips_v2[!((all_trips_v2$start_station_name %like% "TEST" | all_trips_v2$start_station_name %like% "test")),]
+glimpse(all_trips_v2)
+```
+It is important to make sure that customer_type column has only two distinct values. Let's confirm the same.
+```{r}
+table(all_trips_v2$customer_type)
+setNames(aggregate(trip_duration ~ customer_type, all_trips_v2, sum), c("customer_type", "total_trip_duration(mins)"))
+```
+#Analyze and Share the Data
+The dataframe is now ready for descriptive analysis that will help us uncover some insights on how the casual riders and members use Cyclistic rideshare differently.
+
+First, let's try to get some simple statistics on trip_duration for all customers, and do the same by customer_type.
+```{r}
+summary(all_trips_v2$trip_duration)
+```
+```{r}
+all_trips_v2 %>%
+    group_by(customer_type) %>%
+    summarise(min_trip_duration = min(trip_duration),max_trip_duration = max(trip_duration),
+              median_trip_duration = median(trip_duration), mean_trip_duration = mean(trip_duration))
+```
+The mean trip duration of member riders is lower than the mean trip duration of all trips, while it is exactly the opposite for casual riders, whose mean trip duration is higher than the the mean trip duration of all trips. This tells us that casual riders usually take the bikes out for a longer duration compared to members.
+
+#Total number of trips by customer type and day of the week
+```{r}
+all_trips_v2$day_of_the_week <- ordered(all_trips_v2$day_of_the_week, levels=c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))
+all_trips_v2$month <- ordered(all_trips_v2$month, levels=c("Apr_20", "May_20", "Jun_20", "Jul_20", "Aug_20", "Sep_20", "Oct_20",
+                                                          "Nov_20", "Dec_20", "Jan_21", "Feb_21", "Mar_21", 
+                                                           "Apr_21", "May_21", "Jun_21", "Jul_21"))
+all_trips_v2 %>% 
+  group_by(customer_type, day_of_the_week) %>%  
+  summarise(number_of_rides = n(),average_duration_mins = mean(trip_duration)) %>% 
+  arrange(customer_type, desc(number_of_rides))
+```
+#Visualization
+```{r}
+all_trips_v2 %>%  
+  group_by(customer_type, day_of_the_week) %>% 
+  summarise(number_of_rides = n()) %>% 
+  arrange(customer_type, day_of_the_week)  %>% 
+  ggplot(aes(x = day_of_the_week, y = number_of_rides, fill = customer_type)) +
+  labs(title ="Total trips by customer type Vs. Day of the week") +
+  geom_col(width=0.5, position = position_dodge(width=0.5)) +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+From the table and graph above, casual customers are most busy on Sundays followed by Saturdays, while members are most busy on later half of the week extending into the weekend. Interesting pattern to note though is the consistent trip numbers among members with less spread over entire week as compared to casual riders who don't seem to use the bikeshare services much during weekdays.
+
+#Average number of trips by customer type and month
+```{r}
+unique(all_trips$month)
+
+all_trips_v2 %>% 
+  group_by(customer_type, month) %>%  
+  summarise(number_of_rides = n(),`average_duration_(mins)` = mean(trip_duration)) %>% 
+  arrange(customer_type,desc(number_of_rides))
+```
+#Visualization:
+
+```{r}
+all_trips_v2 %>%  
+  group_by(customer_type, month) %>% 
+  summarise(number_of_rides = n()) %>% 
+  arrange(customer_type, month)  %>% 
+  ggplot(aes(x = month, y = number_of_rides, fill = customer_type)) +
+  labs(title ="Total trips by customer type Vs. Month") +
+  theme(axis.text.x = element_text(angle = 30)) +
+  geom_col(width=0.5, position = position_dodge(width=0.5)) +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+The data shows that the months of July, August and September are the most busy time of the year among both members and casual riders. This could be attributed to an external factor (eg. cold weather, major quality issue) that might have hindered with customer needs. 2021 is a tough year when Covid comes. People care more about their health. The charts shows that the no.of rides in 2021 is higher than 2020 in general. However, the number of trips made by members is always higher than the casual riders across all months of the year.
+
+#Visualizaton of average trip duration by customer type on each day of the week
+```{r}
+all_trips_v2 %>%  
+  group_by(customer_type, day_of_the_week) %>% 
+  summarise(average_trip_duration = mean(trip_duration)) %>%
+  ggplot(aes(x = day_of_the_week, y = average_trip_duration, fill = customer_type)) +
+  geom_col(width=0.5, position = position_dodge(width=0.5)) + 
+  labs(title ="Average trip duration by customer type Vs. Day of the week")
+```
+The average trip duration of a casual rider is more than twice that of a member. Note that this necessarily does not mean that casual riders travel farther distance. It is also interesting to note that weekends not only contribute to more number of trips but also longer trips on average when compared to weekdays.
+#Visualizaton of average trip duration by customer type Vs. month
+```{r}
+all_trips_v2 %>%  
+  group_by(customer_type, month) %>% 
+  summarise(average_trip_duration = mean(trip_duration)) %>%
+  ggplot(aes(x = month, y = average_trip_duration, fill = customer_type)) +
+  geom_col(width=0.5, position = position_dodge(width=0.5)) + 
+  labs(title ="Average trip duration by customer type Vs. Month") +
+  theme(axis.text.x = element_text(angle = 30))
+```
+Average trip duration of member riders is anywhere between 10-20 minutes throughout the year, exception being April when it goes slightly over 20 minutes. However, there seems to be a distinct pattern when it comes to casual riders, whose average trip duration swings wildly from as low as ~25 minutes to more than an hour depending on time of the year. It is worth noting unusually long trip durations by casual riders in the month of April.
+#Visualizaton of bike demand over 24 hr period (a day)
+```{r}
+all_trips_v2 %>%  
+  group_by(customer_type, time) %>% 
+  summarise(number_of_trips = n()) %>%
+  ggplot(aes(x = time, y = number_of_trips, color = customer_type, group = customer_type)) +
+  geom_line() +
+  scale_x_datetime(date_breaks = "1 hour", minor_breaks = NULL,
+                   date_labels = "%H:%M", expand = c(0,0)) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(title ="Demand over 24 hours of a day", x = "Time of the day")
+```
+For the members, there seems to be two distict peak demand hours: 7-9 AM and 5-7 PM, the latter one coinciding with the peak demand hours of casual riders as well. One could probably hypothesize that office-goers make up majority of the members profile due to demand in both morning and evening hours, but we need more data to substabtiate this assumption.
+#Visualizaton of ride type Vs. number of trips by customer type
+
+```{r}
+all_trips_v2 %>%
+  group_by(ride_type, customer_type) %>%
+  summarise(number_of_trips = n()) %>%  
+  ggplot(aes(x= ride_type, y=number_of_trips, fill= customer_type))+
+              geom_bar(stat='identity') +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) +
+  labs(title ="Ride type Vs. Number of trips")
+```
+Classic bikes are predominantly used by members. Docked bikes are in most demand and equally used by both members as well as casual riders. Electric bikes are more favored by members. If electric bikes costs the highest among all 3 types, it would be a financially sound move to increase their fleet while reducing docked bikes, as they are already preferred by members who make up for the majority of the trips.
+
+Note: Data is not available on the quantity of fleet across each type of bikes.
+
+# Act
+#Key Takeaways
+1.Casual riders made 41% of total trips contributing to 66% of total trip duration between Apr'20 - Mar'21. Member riders make up 59% of total trips contributing to 34% of total trip duration between Apr'20 - Mar'21
+
+2.Usage (based on trip duration) of bikes by casual riders is almost twice that of member riders.
+
+3.Casual customers use bikeshare services more during weekends, while members use them consistently over the entire week.
+
+4.Average trip duration of casual riders is more than twice that of member rider over any given day of the week cumulatively.
+
+5.Casual riders ride longer during first half of the year compared to the second half, while members clock relatively similar average trip duration month over month.
+
+6.Casual riders prefer docked bikes the most while classic bikes are popular among members.
+
+#Recommendations
+1.Provide attractive promotions for casual riders on weekdays so that casual members use the bikeshare services ore uniformly across the entire week.
+
+2.Offer discounted membership fee for renewals after the first year. It might nudge casual riders to take up membership.
+
+3.Offer discounted pricing during non-busy hours so that casual riders might choose to use bikes more often and level out demand over the day.
+
+#Additonal data that could expand scope of analysis
+
+1.Occupation of member riders - this data could be used to target non-members who come under similar occupation
+
+2.Age and gender profile - Again, this data could be used to study the category of riders who can be targeted for attracting new members.
+
+3.Pricing details for members and casual riders - Based on this data, we might be to optimize cost structure for casual riders or provide discounts without affecting the profit margin.
+
+4.Address/ neighborhood details of members to investigate if there are any location specific parameters that encourage membership.
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
